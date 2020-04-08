@@ -6,77 +6,137 @@ import (
 	"net/http"
 
 	"../data"
+	"../models"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func GetPeople(w http.ResponseWriter, req *http.Request) {
-	json.NewEncoder(w).Encode(data.People)
-}
-
-func GetPerson(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	for _, item := range data.People {
-		if item.ID == bson.ObjectIdHex(params["id"]) {
-			json.NewEncoder(w).Encode(item)
-			return
-		}
-	}
-	json.NewEncoder(w).Encode(&data.Person{})
-}
-
-func UpdatePerson(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	for index, item := range data.People {
-		if item.ID == bson.ObjectIdHex(params["id"]) {
-			var newPerson data.Person
-			err := json.NewDecoder(req.Body).Decode(&newPerson)
-
-			if err != nil {
-				log.Println("Error while updating Person.", err)
-				return
-			}
-
-			if newPerson.FirstName != "" {
-				data.People[index].FirstName = newPerson.FirstName
-			}
-			if newPerson.LastName != "" {
-				data.People[index].LastName = newPerson.LastName
-			}
-			if newPerson.Job != "" {
-				data.People[index].Job = newPerson.Job
-			}
-
-			json.NewEncoder(w).Encode(data.People[index])
-			return
-		}
-	}
-	json.NewEncoder(w).Encode(&data.Person{})
-}
-
+// CreatePerson creates a new person with users submitted data
 func CreatePerson(w http.ResponseWriter, req *http.Request) {
-	var person data.Person
+	var person models.Person
 	err := json.NewDecoder(req.Body).Decode(&person)
 
 	if err != nil {
-		log.Println("Error while creating new Person.", err)
+		log.Println("Bad request.")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	obj_id := bson.NewObjectId()
-	person.ID = obj_id
+	person.ID = bson.NewObjectId()
 
-	data.People = append(data.People, person)
-	json.NewEncoder(w).Encode(data.People)
+	data.Persons = append(data.Persons, person)
+
+	j, err := json.Marshal(person)
+	if err != nil {
+		log.Println("Error marshalling json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(j)
 }
 
-func DeletePerson(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	for index, item := range data.People {
-		if item.ID == bson.ObjectIdHex(params["id"]) {
-			data.People = append(data.People[:index], data.People[index+1:]...)
-			break
-		}
+// GetPersons returns an array with all persons saved in data package
+func GetPersons(w http.ResponseWriter, req *http.Request) {
+	j, err := json.Marshal(data.Persons)
+	if err != nil {
+		log.Println("Error marshalling json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
-	json.NewEncoder(w).Encode(data.People)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(j)
+}
+
+// GetPersonByID gets person by ID if exist
+func GetPersonByID(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	if bson.IsObjectIdHex(id) {
+		for _, item := range data.Persons {
+			if item.ID == bson.ObjectIdHex(id) {
+				j, err := json.Marshal(item)
+				if err != nil {
+					log.Println("Error marshalling json")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(j)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
+}
+
+// UpdatePerson finds person by ID and if exist, updates its data
+func UpdatePerson(w http.ResponseWriter, req *http.Request) {
+	var body models.Person
+	err := json.NewDecoder(req.Body).Decode(&body)
+
+	if err != nil {
+		log.Println("Bad request.")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	if bson.IsObjectIdHex(id) {
+		for index, item := range data.Persons {
+			if item.ID == bson.ObjectIdHex(id) {
+				data.Persons[index].FirstName = body.FirstName
+				data.Persons[index].LastName = body.LastName
+				data.Persons[index].Job = body.Job
+
+				j, err := json.Marshal(data.Persons[index])
+				if err != nil {
+					log.Println("Error marshalling json")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(j)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
+}
+
+// DeletePerson searchs person by ID and deletes it if exist
+func DeletePerson(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	if bson.IsObjectIdHex(id) {
+		for index, item := range data.Persons {
+			if item.ID == bson.ObjectIdHex(id) {
+				data.Persons = append(data.Persons[:index], data.Persons[index+1:]...)
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
 }

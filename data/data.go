@@ -1,3 +1,7 @@
 package data
 
-var People []Person
+import (
+	"../models"
+)
+
+var Persons = []models.Person{}

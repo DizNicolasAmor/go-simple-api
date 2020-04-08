@@ -8,11 +8,11 @@ import (
 func InitRoutes() *mux.Router {
 	router := mux.NewRouter().StrictSlash(false)
 
-	router.HandleFunc("/people", handlers.GetPeople).Methods("GET")
-	router.HandleFunc("/people/{id}", handlers.GetPerson).Methods("GET")
-	router.HandleFunc("/people/{id}", handlers.UpdatePerson).Methods("PUT")
-	router.HandleFunc("/people", handlers.CreatePerson).Methods("POST")
-	router.HandleFunc("/people/{id}", handlers.DeletePerson).Methods("DELETE")
+	router.HandleFunc("/persons", handlers.CreatePerson).Methods("POST")
+	router.HandleFunc("/persons", handlers.GetPersons).Methods("GET")
+	router.HandleFunc("/persons/{id}", handlers.GetPersonByID).Methods("GET")
+	router.HandleFunc("/persons/{id}", handlers.UpdatePerson).Methods("PUT")
+	router.HandleFunc("/persons/{id}", handlers.DeletePerson).Methods("DELETE")
 
 	return router
 }

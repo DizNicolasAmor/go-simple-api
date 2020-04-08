@@ -11,9 +11,9 @@ This is a simple API that I buildt in order to put in practice some Golang basic
 
 ##### ENDPOINTS
 
-- GET all the people: `http://localhost:3000/people`
-- GET one specific person: `http://localhost:3000/people/{id}`
-- POST (create) a new person: `http://localhost:3000/people`. Here you have some data as example:
+- GET all the persons: `http://localhost:3000/persons`
+- GET one specific person: `http://localhost:3000/persons/{id}`
+- POST (create) a new person: `http://localhost:3000/persons`. Here you have some data as example:
   ```
   {
       "firstname": "Bill",
@@ -21,7 +21,7 @@ This is a simple API that I buildt in order to put in practice some Golang basic
       "job": "Genius"
   }
   ```
-- PUT (update) one specific person: `http://localhost:3000/people/{id}`
-- DELETE one specific person: `http://localhost:3000/people/{id}`
+- PUT (update) one specific person: `http://localhost:3000/persons/{id}`
+- DELETE one specific person: `http://localhost:3000/persons/{id}`
 
 That's it. Be free to use it, change it and improve it.
